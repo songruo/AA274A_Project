@@ -18,9 +18,9 @@ class DeliveryRequestPublisher:
         #publish the request t times, once every s seconds
         t = 10
         s = 1.
-        for i in range(t):
-            self.request_publisher.publish(self.delivery_request)
-            rospy.sleep(s)
+        #for i in range(t):
+        self.request_publisher.publish(self.delivery_request)
+        #    rospy.sleep(s)
     
     def loop(self):
         """The main loop of the script. The script will ask for food items to add to the 
