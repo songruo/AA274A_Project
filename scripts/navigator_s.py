@@ -61,12 +61,14 @@ class Navigator:
 
         # time when we started following the plan
         self.current_plan_start_time = rospy.get_rostime()
-        self.current_plan_duration = 0 
+        self.current_plan_duration = 0
         self.plan_start = [0.,0.]
         
         # Robot limits
         self.v_max = 0.2    # maximum velocity
         self.om_max = 0.4   # maximum angular velocity
+	#self.v_max = rospy.get_param("~v_max")
+	#self.om_max = rospy.get_param("~om_max")
 
         self.v_des = 0.12   # desired cruising velocity
         self.theta_start_thresh = 0.05   # threshold in theta to start moving forward when path-following
@@ -110,10 +112,11 @@ class Navigator:
         print "finished init"
         
     def dyn_cfg_callback(self, config, level):
-        rospy.loginfo("Reconfigure Request: k1:{k1}, k2:{k2}, k3:{k3}".format(**config))
-        self.pose_controller.k1 = config["k1"]
-        self.pose_controller.k2 = config["k2"]
-        self.pose_controller.k3 = config["k3"]
+        rospy.loginfo("Reconfigure Request: k1:{k1}, k2:{k2}, k3:{k3}, spline_alpha:{spline_alpha}".format(**config))
+        self.pose_controller.k1 = config["k1"] #default: 0.8
+        self.pose_controller.k2 = config["k2"] #default: 0.4
+        self.pose_controller.k3 = config["k3"] #default: 0.4
+	self.spline_alpha = config["spline_alpha"] #default: 0.15
         return config
 
     def cmd_nav_callback(self, data):
@@ -269,6 +272,10 @@ class Navigator:
         x_init = self.snap_to_grid((self.x, self.y))
         self.plan_start = x_init
         x_goal = self.snap_to_grid((self.x_g, self.y_g))
+        x_goal = (round(x_goal[0], 2), round(x_goal[1], 2))
+        x_init = (round(x_init[0], 2), round(x_init[1], 2))
+        print(x_init, x_goal)
+        print(self.occupancy)
         problem = AStar(state_min,state_max,x_init,x_goal,self.occupancy,self.plan_resolution)
 
         rospy.loginfo("Navigator: computing navigation plan")
@@ -362,8 +369,6 @@ class Navigator:
                     self.replan() # we aren't near the goal but we thought we should have been, so replan
             elif self.mode == Mode.PARK:
                 if self.at_goal():
-                    print(self.x, self.y)
-                    print(self.x_g, self.y_g)
                     # forget about goal:
                     self.x_g = None
                     self.y_g = None

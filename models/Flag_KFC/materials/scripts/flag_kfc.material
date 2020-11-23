@@ -1,0 +1,15 @@
+material flag_kfc
+{
+	receive_shadows off
+	technique
+	{
+		pass
+		{
+			texture_unit
+			{
+				texture KFC.png
+
+			}
+		}
+	}
+}

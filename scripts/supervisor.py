@@ -172,7 +172,7 @@ class Supervisor:
         self.pose_goal_publisher.publish(pose_g_msg)
 
     def nav_to_pose(self):
-        """ sends the current desired pose to the naviagtor """
+        """ sends the current desired pose to the navigator """
 
         nav_g_msg = Pose2D()
         nav_g_msg.x = self.x_g
@@ -259,11 +259,19 @@ class Supervisor:
 
         elif self.mode == Mode.STOP:
             # At a stop sign
-            self.nav_to_pose()
+            if self.has_stopped():
+            	self.init_crossing()
+            else:
+                self.stay_idle()
 
         elif self.mode == Mode.CROSS:
             # Crossing an intersection
-            self.nav_to_pose()
+	    if self.close_to(self.x_g, self.y_g, self.theta_g):
+                self.mode = Mode.IDLE
+            elif self.has_crossed():
+                self.mode = Mode.NAV
+	    else:            
+	        self.nav_to_pose()
 
         elif self.mode == Mode.NAV:
             if self.close_to(self.x_g, self.y_g, self.theta_g):
